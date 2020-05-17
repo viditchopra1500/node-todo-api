@@ -2,20 +2,33 @@ var express=require('express');
 var bodyParser=require('body-parser')
 var _=require('lodash')
 const {ObjectID}=require('mongodb')
+
+var {autheticate}=require('./middleware/authenticate')
 var {mongoose}=require('./db/mongoose');
 var {Todo}=require('./models/todo');
 var {User}=require('./models/user');
 mongoose.set('useFindAndModify', false);
 //initially all the routes made are public routes ie any one can hit these and change data.
 //once authentication is completed all these will be private and u need to be logged in to
-//manipulate data that u actually own.
+//manipulate data that u actually own so tasks -->
+//1)send x-auth token to user when user signups.
+//2)validate a x-auth token from user.
+//3)see which token belongs to which user.
 
-var app=express();                            // object of express
-var port =process.env.PORT ||3000;           //for heroku
+var app=express();                            
+var port =process.env.PORT ||3000;  
 
-app.use(bodyParser.json());                   //middleware(always run for all routes when server is running)
+//middleware(always run for all routes when server is running)
+app.use(bodyParser.json());                   
 
-app.post('/todos',(req,res)=>{                //use when user posts a todo
+
+app.get('/user/me',autheticate,(req,res)=>{
+    res.send(req.user)
+})
+
+//use when user posts a todo
+app.post('/todos',(req,res)=>{  
+    //to create a new document(new entry) in Todo collection             
     var todo=new Todo({
         text:req.body.text
     });
@@ -26,7 +39,8 @@ app.post('/todos',(req,res)=>{                //use when user posts a todo
     })
 });
 
-app.get('/todos',(req,res)=>{                 //use when user wants all available todos
+//use when user wants all available todos
+app.get('/todos',(req,res)=>{                 
     Todo.find().then((docs)=>{
         res.send({docs})
     }).catch((e)=>{
@@ -34,7 +48,8 @@ app.get('/todos',(req,res)=>{                 //use when user wants all availabl
     })
 })
 
-app.get('/todos/:id',(req,res)=>{             //use when user wants a particular todo
+//use when user wants a particular todo
+app.get('/todos/:id',(req,res)=>{             
     var id =req.params.id;
     if(!ObjectID.isValid(id)){
         return res.status(404).send('ID not valid')
@@ -50,7 +65,8 @@ app.get('/todos/:id',(req,res)=>{             //use when user wants a particular
     });
 })
 
-app.delete('/todos/:id',(req,res)=>{          //use when to delete a specific todo
+//use when to delete a specific todo
+app.delete('/todos/:id',(req,res)=>{          
     var id =req.params.id;
     if(!ObjectID.isValid(id)){
         return res.status(404).send('ID not valid')
@@ -65,7 +81,8 @@ app.delete('/todos/:id',(req,res)=>{          //use when to delete a specific to
     })
 })
 
-app.patch('/todos/:id',(req,res)=>{                   //to update a particular todo (as completed)
+//to update a particular todo (as completed)
+app.patch('/todos/:id',(req,res)=>{                   
     var id=req.params.id;
     var body=_.pick(req.body,['text','completed']);
     
@@ -90,13 +107,16 @@ app.patch('/todos/:id',(req,res)=>{                   //to update a particular t
     })
 })
 
-app.post('/user',(req,res)=>{                              //to store a new user
+//to store a new user
+app.post('/user',(req,res)=>{                              
     var body=_.pick(req.body,['email','password']);
     var newUser=new User(body);
     newUser.save().then(()=>{
-        return newUser.generateAuthToken();
-    }).then((token)=>{                                     //chaining a then call to value return not promise return
-        res.header('x-auth',token).send(newUser);             //sending token as a header and user data as body  
+        return newUser.generateAuthToken();                   
+
+    }).then((token)=>{                                     //chaining a then call to get value as a return not promise as a return(also legal)
+
+        res.header('x-auth',token).send(newUser);               
     })
     .catch((e)=>{
         res.status(400).send(e);

@@ -1,16 +1,31 @@
 const {SHA256}=require('crypto-js');
 const jwt=require('jsonwebtoken');
+const bcrypt=require('bcryptjs')
 
-var data={
-    id:11
-};
+var password="123abc";
 
-var token=jwt.sign(data,'123abc');
-console.log(token);
+bcrypt.genSalt(10,(err,salt)=>{
+    bcrypt.hash(password,salt,(err,hash)=>{
+        console.log(hash);
+    });
+});
 
-var token2="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTEsImlhdCI6MTU4ODg3NjQzN30.yaUC3ciHG5lLkAybM-l5JlxL8frhAcpXAsQfMz-jml0"
-var decoded=jwt.verify(token2,'123abc');
-console.log('decoded',decoded);
+var hashedPassword='$2a$10$9Ze1m.7u/HWa5Sh/IaOV6uZdfjp8aF8.1vOCHClhvl.q.PNLQlIqK'
+
+bcrypt.compare(password,hashedPassword,(err,res)=>{
+    console.log(res);
+})
+
+// var data={
+//     id:11
+// };
+
+// var token=jwt.sign(data,'123abc');
+// console.log(token);
+
+// var token2="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTEsImlhdCI6MTU4ODg3NjQzN30.yaUC3ciHG5lLkAybM-l5JlxL8frhAcpXAsQfMz-jml0"
+// var decoded=jwt.verify(token2,'123abc');
+// console.log('decoded',decoded);
 // jwt.verify
 // var msg="I am user number 3";
 // var hash=SHA256(msg).toString();

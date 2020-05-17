@@ -2,6 +2,8 @@ var mongoose=require('mongoose')
 const validator=require('validator');
 const jwt=require('jsonwebtoken');
 const _=require('lodash')
+const bcrypt =require('bcryptjs');
+
 var UserSchema=new mongoose.Schema({             //why we need to do in schema--> as it allows me to add methods to my schema
     email:{
         type:String,
@@ -89,6 +91,28 @@ UserSchema.statics.findByToken=function(token){
         'tokens.access':'auth'
     })
 }
+
+//mongoose middleware-It lets us run certain code before or after certain events eg we run some code after we save/update a model
+//or run some code before we save/update the model
+//we have to mention before which event we want to run it
+
+UserSchema.pre('save',function(next){
+    var user=this;
+    
+    if(user.isModified('password')){
+        var password=user.password;
+        bcrypt.genSalt(10,(err,salt)=>{
+            bcrypt.hash(password,salt,(err,hash)=>{
+                user.password=hash;
+                console.log(hash);
+                next();
+            });
+        });
+    }
+    else{
+        next();
+    }
+});
 
 var User=mongoose.model('users',UserSchema);
 

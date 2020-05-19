@@ -8,7 +8,7 @@ var autheticate=(req,res,next)=>{
     var token=req.header('x-auth');
 
     User.findByToken(token).then((user)=>{
-        //ie token is valid but no such user
+        //ie token is valid but no such user is found
         if(!user){
             return Promise.reject();
         }

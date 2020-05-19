@@ -40,6 +40,7 @@ var UserSchema=new mongoose.Schema({             //why we need to do in schema--
 //WHY ALL THESE METHODS ARE MADE-> SO THAT ROUTES WILL HAVE ACCESS TO INDIVIDUAL DOCS/ENTRIES CREATED.
 
 
+
 //This func determines what will be sent back to user as password(user doesnt wants to know his pass) and token (sent in header)
 UserSchema.methods.toJSON=function(){                    
     var user= this;
@@ -48,13 +49,12 @@ UserSchema.methods.toJSON=function(){
 };
 
 //these methods have access to individual documents when being created.
-//'this' contains info of current user ,why not arrow function we dont have access to this thus no access to current user        
+//'this' contains info of current user ,why not arrow function ->as we dont have access to this thus no access to current user        
 UserSchema.methods.generateAuthToken=function(){
     var user=this;                                        
     var access='auth';   
 
     //the data we want to hash
-    // we find a user by his _id as id is unique ,password is not unique but we verify password when he logins .
     var data={_id:user._id.toHexString(),access};
 
     //creating the token and converting it to string as what we get back is an array not string.          
@@ -68,6 +68,23 @@ UserSchema.methods.generateAuthToken=function(){
         return token;                                     
     })
 }
+
+UserSchema.statics.findByCredentials=function(email,password){
+    var User=this;
+
+    return User.findOne({email}).then((user)=>{
+
+        return new Promise((resolve,reject)=>{
+            bcrypt.compare(password,user.password,(err,res)=>{
+                if(err)
+                reject(err);
+                else
+                resolve(user);
+            })
+        })
+    })
+};
+
 //statics-->is kind of methods but now the function will become model methods not instance.
 UserSchema.statics.findByToken=function(token){     
      //here model is 'this' (in model methods the model is this)           
@@ -92,10 +109,10 @@ UserSchema.statics.findByToken=function(token){
     })
 }
 
-//mongoose middleware-It lets us run certain code before or after certain events eg we run some code after we save/update a model
-//or run some code before we save/update the model
+//mongoose middleware-It lets us run certain code before or after certain events 
+//eg we run some code before/after we save/update a model
 //we have to mention before which event we want to run it
-
+//used to hash password whenever a user is saved
 UserSchema.pre('save',function(next){
     var user=this;
     
@@ -104,7 +121,6 @@ UserSchema.pre('save',function(next){
         bcrypt.genSalt(10,(err,salt)=>{
             bcrypt.hash(password,salt,(err,hash)=>{
                 user.password=hash;
-                console.log(hash);
                 next();
             });
         });

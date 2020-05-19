@@ -2,6 +2,7 @@ var express=require('express');
 var bodyParser=require('body-parser')
 var _=require('lodash')
 const {ObjectID}=require('mongodb')
+const bcrypt=require('bcryptjs')
 
 var {autheticate}=require('./middleware/authenticate')
 var {mongoose}=require('./db/mongoose');
@@ -21,10 +22,6 @@ var port =process.env.PORT ||3000;
 //middleware(always run for all routes when server is running)
 app.use(bodyParser.json());                   
 
-
-app.get('/user/me',autheticate,(req,res)=>{
-    res.send(req.user)
-})
 
 //use when user posts a todo
 app.post('/todos',(req,res)=>{  
@@ -107,14 +104,15 @@ app.patch('/todos/:id',(req,res)=>{
     })
 })
 
-//to store a new user
-app.post('/user',(req,res)=>{                              
+//to store a new user(sign up)
+app.post('/users',(req,res)=>{                              
     var body=_.pick(req.body,['email','password']);
     var newUser=new User(body);
     newUser.save().then(()=>{
-        return newUser.generateAuthToken();                   
+        return newUser.generateAuthToken();     
 
-    }).then((token)=>{                                     //chaining a then call to get value as a return not promise as a return(also legal)
+    //chaining a then call to get value as a return not promise as a return(also legal)
+    }).then((token)=>{                                     
 
         res.header('x-auth',token).send(newUser);               
     })
@@ -122,6 +120,28 @@ app.post('/user',(req,res)=>{
         res.status(400).send(e);
     })
 })
+
+//when i have a token now i need to authenticate it
+app.get('/users/me',autheticate,(req,res)=>{
+    res.send(req.user)
+})
+
+app.post('/users/login',(req,res)=>{
+    var email=req.body.email;
+    var password=req.body.password;
+
+    //imp point to note: we keep the chain alive by returning thus we
+    //return till we can get an error(so it can be catched) thus for all promises we always return 
+    //so that we can use catch..
+    User.findByCredentials(email,password).then((user)=>{
+        return user.generateAuthToken().then((token)=>{
+            res.header('x-auth',token).send(user);               
+        })
+
+    }).catch(e=>{
+        res.status(400).send(e);
+    })
+});
 
 app.listen(port,()=>{
     console.log(`started on port ${port}`);

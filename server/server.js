@@ -122,6 +122,7 @@ app.post('/users',(req,res)=>{
 })
 
 //when i have a token now i need to authenticate it
+//its just authenticating that the token is valid or not
 app.get('/users/me',autheticate,(req,res)=>{
     res.send(req.user)
 })
@@ -142,6 +143,14 @@ app.post('/users/login',(req,res)=>{
         res.status(400).send(e);
     })
 });
+//to logout and thus remove/delete the current token. 
+app.delete('/users/me/token',autheticate,(req,res)=>{
+    req.user.removeToken(req.token).then(()=>{
+        res.status(200).send();
+    }).catch(e=>{
+        res.status(400).send(e);
+    })
+})
 
 app.listen(port,()=>{
     console.log(`started on port ${port}`);

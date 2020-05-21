@@ -23,7 +23,7 @@ var UserSchema=new mongoose.Schema({             //why we need to do in schema--
         require:true,
         minlength:6
     },
-    tokens:[{                                      // two elements in an array
+    tokens:[{                                      // array whose one element is an object (this object contains two props--->access and token) 
         access:{
             type:String, 
             required:true,
@@ -68,6 +68,19 @@ UserSchema.methods.generateAuthToken=function(){
         return token;                                     
     })
 }
+
+// to delete a token 
+UserSchema.methods.removeToken=function(token){
+      var user=this;
+      //pull finds the element of array having token property match and deletes it
+      return user.update({
+          $pull:{
+              tokens:{
+                  token
+              }
+          }
+      })
+};
 
 UserSchema.statics.findByCredentials=function(email,password){
     var User=this;

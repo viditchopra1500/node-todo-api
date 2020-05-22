@@ -38,7 +38,8 @@ app.post('/todos',autheticate,(req,res)=>{
 });
 
 //use when user wants all available todos
-app.get('/todos',autheticate,(req,res)=>{                 
+app.get('/todos',autheticate,(req,res)=>{
+                 
     Todo.find({
         _creator:req.user._id
     }).then((docs)=>{
@@ -49,14 +50,17 @@ app.get('/todos',autheticate,(req,res)=>{
 })
 
 //use when user wants a particular todo
+//params is used when sending particular data in url only
 app.get('/todos/:id',autheticate,(req,res)=>{             
     var id =req.params.id;
     if(!ObjectID.isValid(id)){
         return res.status(404).send('ID not valid')
     }
 
-    Todo.findOne({id,
-        _creator:req.user._id
+
+    Todo.findOne({
+        _creator:req.user._id,
+        _id:id
     }).then((todo)=>{
         if(!todo){
             return res.status(404).send('id not found');
@@ -73,7 +77,7 @@ app.delete('/todos/:id',autheticate,(req,res)=>{
     if(!ObjectID.isValid(id)){
         return res.status(404).send('ID not valid')
     }
-    Todo.findOneAndRemove({id,
+    Todo.findOneAndRemove({_id:id,
         _creator:req.user._id
     }).then((todo)=>{
         if(!todo){
@@ -101,7 +105,7 @@ app.patch('/todos/:id',autheticate,(req,res)=>{
         body.completedAt=null;
     }
 
-    Todo.findOneAndUpdate({id,
+    Todo.findOneAndUpdate({_id:id,
         _creator:req.user._id
     },{$set:body},{new:true}).then((todo)=>{
         if(!todo){
@@ -136,6 +140,7 @@ app.get('/users/me',autheticate,(req,res)=>{
     res.send(req.user)
 })
 
+//to login again and get a new token
 app.post('/users/login',(req,res)=>{
     var email=req.body.email;
     var password=req.body.password;

@@ -14,9 +14,16 @@ var Todo=mongoose.model('Todo',{
     completedAt:{
         type: Number,
         default:null
+    },
+    _creator:{
+        type:mongoose.Schema.Types.ObjectId,
+        required:true
     }
 });
 
 module.exports={
     Todo
 };
+
+//IF a todo needs to be associated to a user we need a way to 
+//set up that association (we did this by (_creator))
